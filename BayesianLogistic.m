@@ -63,7 +63,7 @@ post_prod = @(b) zc.*post(b).*(det(Hessian))^(-0.5)...
         .*exp(-0.5*(Hessian(1,1)*(b(:,1)-betaMLE(1)).^2+Hessian(2,2)*(b(:,2)-betaMLE(2)).^2 ...
         +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))));
 
-n = 1;
+n = 50;
 betaSobol = zeros(n,2);
 betaSobol_mle = zeros(n,2);    
 betaSobol_prod = zeros(n,2);
@@ -92,8 +92,8 @@ for i = 1:n
     Nmax_prod = min(Nqmn_prod);
     betaSobol_prod(i,:) = [q1_prod,q2_prod];    
     
-    slicesampler;
-    betaMCMC(i,:) = mean(MCMCsample);
+%     slicesampler;
+%     betaMCMC(i,:) = mean(MCMCsample);
 end
 corner_sw = min([betaSobol;betaSobol_mle;betaSobol_prod]);
 corner_ne = max([betaSobol;betaSobol_mle;betaSobol_prod]);
@@ -105,15 +105,15 @@ corner = center-absTol;
 
 %%
 figure;
-plot(betaSobol(:,1),betaSobol(:,2),'o',betaSobol_mle(:,1),betaSobol_mle(:,2),...
-    '+',betaSobol_prod(:,1),betaSobol_prod(:,2),'*',betaMCMC(:,1),betaMCMC(:,2),'^','MarkerSize',10)
 % plot(betaSobol(:,1),betaSobol(:,2),'o',betaSobol_mle(:,1),betaSobol_mle(:,2),...
-%     '+','MarkerSize',10)
+%     '+',betaSobol_prod(:,1),betaSobol_prod(:,2),'*',betaMCMC(:,1),betaMCMC(:,2),'^','MarkerSize',10)
+plot(betaSobol(:,1),betaSobol(:,2),'o',betaSobol_mle(:,1),betaSobol_mle(:,2),...
+    '+',betaSobol_prod(:,1),betaSobol_prod(:,2),'*','MarkerSize',10)
 hold on;
-rectangle('position',[corner 2*absTol 2*absTol])
+rectangle('position',[corner 2*absTol 2*absTol],'EdgeColor','r','LineWidth',1.5)
 title([num2str(n),' replications, tol = ',num2str(absTol)]);
-xlabel('$\beta_0$');
-ylabel('$\beta_1$');
+xlabel('$\hat{\beta}_1$');
+ylabel('$\hat{\beta}_2$');
 axis equal;
 legend('$\pi$','$\rho_{MLE}$','$\pi\cdot\rho_{MLE}$','MCMC','Location','southwest')
 legend('boxon')

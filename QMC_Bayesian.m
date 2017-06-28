@@ -1,4 +1,6 @@
-function [q,out_param,qm] = cubSobolBayesian(f1,f2,absTol)
+function [ q,out_param ] = QMC_Bayesian( numt, dnot,absTol )
+%QMC_BAYESIAN Summary of this function goes here
+%   Detailed explanation goes here
 
 t_start = tic;
 %% Initial important cone factors and Check-initialize parameters
@@ -9,6 +11,11 @@ r_lag = 4; %distance between coefficients summed and those computed
 
 f1 = @(x) f1(gail.stdnorminv(x));
 f2 = @(x) f2(gail.stdnorminv(x));
+
+f1 = @(x) f1(gail.stdnorminv(x));
+f2 = @(x) f2(gail.stdnorminv(x));
+f1CV = @(x) f1CV(bsxfun(@plus,gail.stdnorminv(x)*A',mu'));
+f2CV = @(x) f2CV(bsxfun(@plus,gail.stdnorminv(x)*A',mu'));
 
 out_param.d = 2;
 out_param.mmin = 10;
@@ -21,6 +28,7 @@ Stilde1=zeros(out_param.mmax-out_param.mmin+1,1); %initialize sum of DFWT terms
 Stilde2=zeros(out_param.mmax-out_param.mmin+1,1);
 % CStilde_low = -inf(1,out_param.mmax-l_star+1); %initialize various sums of DFWT terms for necessary conditions
 % CStilde_up = inf(1,out_param.mmax-l_star+1); %initialize various sums of DFWT terms for necessary conditions
+
 errest1=zeros(out_param.mmax-out_param.mmin+1,1); %initialize error estimates
 errest2=zeros(out_param.mmax-out_param.mmin+1,1);
 appxinteg1=zeros(out_param.mmax-out_param.mmin+1,1); %initialize approximations to integral
@@ -34,10 +42,13 @@ n0=out_param.n; %initial number of points
 xpts=sobstr(1:n0,1:out_param.d); %grab Sobol' points
 y1 = f1(xpts); %evaluate integrand
 y2 = f2(xpts);
-%disp(['size of y1',size(y1)])
-%disp(['size of y2',size(y2)])
 yval1 = y1;
 yval2 = y2;
+
+y1CV = f1CV(xpts); %evaluate integrand
+y2CV = f2CV(xpts);
+yval1CV = y1CV;
+yval2CV = y2CV;
 
 %% Compute initial FWT
 for l=0:out_param.mmin-1
@@ -46,13 +57,20 @@ for l=0:out_param.mmin-1
    ptind=repmat([true(nl,1); false(nl,1)],nmminlm1,1);
    evenval1=y1(ptind);
    oddval1=y1(~ptind);
-   %display(size(y2));display(y2);display(size(ptind));
    evenval2=y2(ptind);
    oddval2=y2(~ptind);
    y1(ptind)=(evenval1+oddval1)/2;
    y1(~ptind)=(evenval1-oddval1)/2;
    y2(ptind)=(evenval2+oddval2)/2;
    y2(~ptind)=(evenval2-oddval2)/2;   
+   evenval1CV=y1CV(ptind);
+   oddval1CV=y1CV(~ptind);
+   evenval2CV=y2CV(ptind);
+   oddval2CV=y2CV(~ptind);
+   y1CV(ptind)=(evenval1CV+oddval1CV)/2;
+   y1CV(~ptind)=(evenval1CV-oddval1CV)/2;
+   y2CV(ptind)=(evenval2CV+oddval2CV)/2;
+   y2CV(~ptind)=(evenval2CV-oddval2CV)/2;   
 end
 %y now contains the FWT coefficients
 
@@ -61,10 +79,51 @@ kappanumap1=(1:out_param.n)'; %initialize map
 kappanumap2=(1:out_param.n)';
 for l=out_param.mmin-1:-1:1
    nl=2^l;
+   oldone1CV=abs(y1CV(kappanumap1(2:nl))); %earlier values of kappa, don't touch first one
+   newone1CV=abs(y1CV(kappanumap1(nl+2:2*nl))); %later values of kappa, 
+   oldone2CV=abs(y1CV(kappanumap2(2:nl))); %earlier values of kappa, don't touch first one
+   newone2CV=abs(y1CV(kappanumap2(nl+2:2*nl))); %later values of kappa, 
+   flip1=find(newone1CV>oldone1CV); %which in the pair are the larger ones
+   flip2=find(newone2CV>oldone2CV); %which in the pair are the larger ones
+   if ~isempty(flip1)
+       flipall=bsxfun(@plus,flip1,0:2^(l+1):2^out_param.mmin-1);
+       flipall=flipall(:);
+       temp=kappanumap1(nl+1+flipall); %then flip 
+       kappanumap1(nl+1+flipall)=kappanumap1(1+flipall); %them
+       kappanumap1(1+flipall)=temp; %around
+   end
+   if ~isempty(flip2)
+       flipall=bsxfun(@plus,flip2,0:2^(l+1):2^out_param.mmin-1);
+       flipall=flipall(:);
+       temp=kappanumap2(nl+1+flipall); %then flip 
+       kappanumap2(nl+1+flipall)=kappanumap2(1+flipall); %them
+       kappanumap2(1+flipall)=temp; %around
+   end
+end
+
+%% CV
+X1 = y1(kappanumap1(2^(out_param.mmin-r_lag-1)+1:end))-y1CV(kappanumap1(2^(out_param.mmin-r_lag-1)+1:end));
+Y1 = y1(kappanumap1(2^(out_param.mmin-r_lag-1)+1:end));
+beta1 = X1 \ Y1;  
+out_param.beta1 = beta1;
+yval1 = (1-beta1)*yval1 + beta1*yval1CV;% get new function value
+y1 = (1-beta1)*y1 + beta1*y1CV;% redefine function
+
+X2 = y2(kappanumap2(2^(out_param.mmin-r_lag-1)+1:end))-y2CV(kappanumap2(2^(out_param.mmin-r_lag-1)+1:end));
+Y2 = y2(kappanumap2(2^(out_param.mmin-r_lag-1)+1:end));
+beta2 = X2 \ Y2;  
+out_param.beta2 = beta2;
+yval2 = (1-beta2)*yval2 + beta2*yval2CV;% get new function value
+y2 = (1-beta2)*y2 + beta2*y2CV;% redefine function
+%% rebuild kappa map
+kappanumap1=(1:out_param.n)'; %initialize map
+kappanumap2=(1:out_param.n)';
+for l=out_param.mmin-1:-1:1
+   nl=2^l;
    oldone1=abs(y1(kappanumap1(2:nl))); %earlier values of kappa, don't touch first one
    newone1=abs(y1(kappanumap1(nl+2:2*nl))); %later values of kappa, 
-   oldone2=abs(y1(kappanumap2(2:nl))); %earlier values of kappa, don't touch first one
-   newone2=abs(y1(kappanumap2(nl+2:2*nl))); %later values of kappa, 
+   oldone2=abs(y2(kappanumap2(2:nl))); %earlier values of kappa, don't touch first one
+   newone2=abs(y2(kappanumap2(nl+2:2*nl))); %later values of kappa, 
    flip1=find(newone1>oldone1); %which in the pair are the larger ones
    flip2=find(newone2>oldone2); %which in the pair are the larger ones
    if ~isempty(flip1)
@@ -128,15 +187,16 @@ for m=out_param.mmin+1:out_param.mmax
        break;
    end
    out_param.n=2^m;
-   out_param.m=m;
    mnext=m-1;
    nnext=2^mnext;
    xnext=sobstr(n0+(1:nnext),1:out_param.d); 
    n0=n0+nnext;
    
-    ynext1=f1(xnext);
+    ynext1=f1(xnext);ynext1CV=f1CV(xnext);
+    ynext1 = (1-beta1)*ynext1 + beta1*ynext1CV;
     yval1=[yval1; ynext1];
-    ynext2=f2(xnext);
+    ynext2=f2(xnext);ynext2CV=f2CV(xnext);
+    ynext2 = (1-beta2)*ynext2 + beta2*ynext2CV;
     yval2=[yval2; ynext2];
 
    %% Compute initial FWT on next points
@@ -234,6 +294,10 @@ for m=out_param.mmin+1:out_param.mmax
        out_param.time=toc(t_start);
        is_done = true;
     elseif m == out_param.mmax;
-        warning('samples run out')
+        warning('samples run out');
+        q=v_hat;
+        out_param.time=toc(t_start);
     end
 end
+end
+

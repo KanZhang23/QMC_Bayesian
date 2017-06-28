@@ -39,9 +39,9 @@ post_stdn = @(b) prod(logitp(b,x).^y.*(1-logitp(b,x)).^(1-y));
 post_mle = @(b) post_stdn(b).*(det(Hessian))^(-0.5)...
         .*exp(-0.5*(Hessian(1,1)*(b(1)-betaMLE(1)).^2+Hessian(2,2)*(b(2)-betaMLE(2)).^2 ...
         +2*Hessian(1,2)*(b(1)-betaMLE(1)).*(b(2)-betaMLE(2))+b(1).^2+b(2).^2));
-post_prod = @(b) 1.*post_stdn(b).*(det(Hessian))^(-0.5)...
+post_prod = @(b) zc.*post_stdn(b).*(det(Hessian))^(-0.5)...
         .*exp(-0.5*(Hessian(1,1)*(b(1)-betaMLE(1)).^2+Hessian(2,2)*(b(2)-betaMLE(2)).^2 ...
-        +2*Hessian(1,2)*(b(1)-betaMLE(1)).*(b(2)-betaMLE(2))));
+        +2*Hessian(1,2)*(b(1)-betaMLE(1)).*(b(2)-betaMLE(2))))*6;
     
 %% transform
 post_stdn = @(b) post_stdn(gail.stdnorminv(b));
@@ -60,13 +60,14 @@ for i = 1:length(b1)
     end;
 end;
 figure;
+subplot(2,2,1);
 surf(b1,b2,simpost','FaceColor','red','EdgeColor','none')
 camlight left; lighting phong;
-xlabel('$b_0$')
-ylabel('$b_1$')
+xlabel('$\beta_1$')
+ylabel('$\beta_2$')
 xlim([-0.5 3])
 ylim([-3 0.5])
-ax = axis;
+title('$L\pi$')
 b1 = linspace(0, 1, nn);
 b2 = linspace(0, 1, nn);
 
@@ -81,23 +82,27 @@ for i = 1:length(b1)
         simpost_prod(i,j) = post_prod([b1(i); b2(j)]);
     end;
 end;
-figure;
+subplot(2,2,2);
 surf(b1,b2,simpost_stdn,'FaceColor','red','EdgeColor','none')
 camlight left; lighting phong;
-xlabel('$b_0$')
-ylabel('$b_1$')
-axis(ax)
+xlabel('$\beta_1$')
+ylabel('$\beta_2$')
+title('$f_{\pi}$')
+%axis(ax)
 
-figure;
+
+subplot(2,2,3);
+surf(b1,b2,simpost_mle,'FaceColor','red','EdgeColor','none')
+camlight right; lighting phong;
+xlabel('$\beta_1$')
+ylabel('$\beta_2$')
+title('$f_{\rho_{MLE}}$')
+ax = axis;
+
+subplot(2,2,4);
 surf(b1,b2,simpost_prod,'FaceColor','red','EdgeColor','none')
 camlight left; lighting phong;
-xlabel('$b_0$')
-ylabel('$b_1$')
-
-ax = axis;
-figure;
-surf(b1,b2,simpost_mle,'FaceColor','red','EdgeColor','none')
-camlight left; lighting phong;
-xlabel('$b_0$')
-ylabel('$b_1$')
+xlabel('$\beta_1$')
+ylabel('$\beta_2$')
+title('$f_{\pi\rho_{MLE}}$')
 axis(ax)
