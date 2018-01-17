@@ -1,4 +1,4 @@
-function [q,out_param,qm] = cubSobolBayesian(f1,f2,absTol)
+function [q,q_sim,out_param,qm] = cubSobolBayesian(f1,f2,absTol)
 
 t_start = tic;
 %% Initial important cone factors and Check-initialize parameters
@@ -118,6 +118,7 @@ tol = (v_plus-v_minus)^2/((2*absTol)^2);
 is_done = false;
 if tol <= 1
    q=v_hat;
+   q_sim=q1/q2;
    out_param.time=toc(t_start);
    is_done = true;
 end
@@ -231,6 +232,7 @@ for m=out_param.mmin+1:out_param.mmax
     
     if tol <= 1
        q=v_hat;
+       q_sim=q1/q2;
        out_param.time=toc(t_start);
        is_done = true;
     elseif m == out_param.mmax;

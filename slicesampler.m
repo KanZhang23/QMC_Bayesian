@@ -16,5 +16,5 @@ post = @(b) prod(logit(b).^y.*(1-logit(b)).^(1-y))...  % likelihood
 start = beta;        
 N = 40000;
 %tic;
-MCMCsample = slicesample(start,N,'pdf',post,'burnin',1000);
+MCMCsample = slicesample(start,N,'pdf',post,'thin',3,'burnin',1000);
 %toc;
