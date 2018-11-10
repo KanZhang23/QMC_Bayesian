@@ -1,4 +1,4 @@
-function [q,q_sim,out_param,qm] = cubSobolBayesian(f1,f2,absTol)
+function [q,q_sim,out_param,qm] = cubSobolBayesian(f1,f2,absTol,d)
 
 t_start = tic;
 %% Initial important cone factors and Check-initialize parameters
@@ -10,9 +10,9 @@ r_lag = 4; %distance between coefficients summed and those computed
 f1 = @(x) f1(gail.stdnorminv(x));
 f2 = @(x) f2(gail.stdnorminv(x));
 
-out_param.d = 2;
+out_param.d = d+1;
 out_param.mmin = 10;
-out_param.mmax = 24;
+out_param.mmax = 23;
 out_param.fudge = @(m) 5*2.^-m;
 %% Main algorithm
 sobstr=sobolset(out_param.d); %generate a Sobol' sequence
@@ -125,7 +125,8 @@ end
 
 %% Loop over m
 for m=out_param.mmin+1:out_param.mmax
-   if is_done,
+   disp(['m = ', num2str(m)]);
+    if is_done,
        break;
    end
    out_param.n=2^m;
@@ -236,6 +237,9 @@ for m=out_param.mmin+1:out_param.mmax
        out_param.time=toc(t_start);
        is_done = true;
     elseif m == out_param.mmax;
-        warning('samples run out')
+           warning('samples run out');
+           q=v_hat;
+           q_sim=q1/q2;
+           out_param.time=toc(t_start);
     end
 end

@@ -3,6 +3,7 @@ beta = [1 -1];
 % rng(53);
 absTol = 1e-3;
 M = 100;
+d = 1;
 
 logit = @(b,x) exp(bsxfun(@plus,b(1),b(2)*x))./...
           (1+exp(bsxfun(@plus,b(1),b(2)*x)));
@@ -18,7 +19,6 @@ getMLE;
 % post = @(b) bsxfun(@power,logitp(b,x),y).*...
 %         bsxfun(@power,(1-logitp(b,x)),(1-y));
 post = @(b) prod(bsxfun(@power,logitp(b,x),y).*bsxfun(@power,(1-logitp(b,x)),(1-y)),2);
-% post = @(b) prod(post(b),2);
 
 f1 = @(b) post(b).*b(:,1);
 f2 = @(b) post(b).*b(:,2);
@@ -47,7 +47,7 @@ A_new = U*sqrt(S);
 % f2_mle = @(b) post(b).*b(:,2).*(det(Hessian))^(-0.5)...
 %         .*exp(-0.5*(Hessian(1,1)*(b(:,1)-betaMLE(1)).^2+Hessian(2,2)*(b(:,2)-betaMLE(2)).^2 ...
 %         +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))+b(:,1).^2+b(:,2).^2));
-post_mle = @(b) post(b).*(det(Hessian))^(-0.5)...
+post_mle = @(b) post(b).*(det(-Hessian))^(-0.5)...
         .*exp(-0.5*(Hessian(1,1)*(b(:,1)-betaMLE(1)).^2+Hessian(2,2)*(b(:,2)-betaMLE(2)).^2 ...
         +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))+b(:,1).^2+b(:,2).^2));
 f1_mle = @(b) post_mle(b).*b(:,1);
@@ -61,7 +61,7 @@ f2_mle = @(b) post_mle(b).*b(:,2);
 %         +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))));
 post_prod = @(b) (zc).*post(b).*(det(Hessian))^(-0.5)...
         .*exp(-0.5*(Hessian(1,1)*(b(:,1)-betaMLE(1)).^2+Hessian(2,2)*(b(:,2)-betaMLE(2)).^2 ...
-        +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))))*100000;
+        +2*Hessian(1,2)*(b(:,1)-betaMLE(1)).*(b(:,2)-betaMLE(2))));
 f1_prod = @(b) post_prod(b).*b(:,1);
 f2_prod = @(b) post_prod(b).*b(:,2);
 
@@ -100,9 +100,6 @@ for i = 1:n
     Nmax_prod = min(Nqmn_prod);
     betaSobol_prod(i,:) = [q1_prod,q2_prod];    
     betaSobol_prod_s(i,:) = [q1_prod_s,q2_prod_s];   
-    
-%     slicesampler;
-%     betaMCMC(i,:) = mean(MCMCsample);
 end
 corner_sw = min([betaSobol;betaSobol_mle;betaSobol_prod]);
 corner_ne = max([betaSobol;betaSobol_mle;betaSobol_prod]);

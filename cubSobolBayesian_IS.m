@@ -1,4 +1,4 @@
-function [q,q_sim,out_param,qm] = cubSobolBayesian_IS(f1,f2,absTol,A,mu)
+function [q,q_sim,out_param,qm] = cubSobolBayesian_IS(f1,f2,absTol,A,mu,d)
 
 t_start = tic;
 %% Initial important cone factors and Check-initialize parameters
@@ -7,10 +7,10 @@ r_lag = 4; %distance between coefficients summed and those computed
 % omg_circ = @(m) 2.^(-m);
 % omg_hat = @(m) out_param.fudge(m)/((1+out_param.fudge(r_lag))*omg_circ(r_lag));
 
-f1 = @(x) f1(bsxfun(@plus,gail.stdnorminv(x)*A',mu'));
-f2 = @(x) f2(bsxfun(@plus,gail.stdnorminv(x)*A',mu'));
+f1 = @(x) f1(bsxfun(@plus,gail.stdnorminv(x)*A',mu));
+f2 = @(x) f2(bsxfun(@plus,gail.stdnorminv(x)*A',mu));
 
-out_param.d = 2;
+out_param.d = d+1;
 out_param.mmin = 10;
 out_param.mmax = 24;
 out_param.fudge = @(m) 5*2.^-m;
@@ -224,6 +224,7 @@ for m=out_param.mmin+1:out_param.mmax
     v_minus = min(v_pm);
     v_hat =  (v_plus + v_minus)/2;
     qm(m-9,1) = v_hat;
+    %disp(['m= ', num2str(m),' ',num2str(v_plus - v_minus)]);
     tol = (v_plus-v_minus)^2/((2*absTol)^2);
     
     if tol <= 1
