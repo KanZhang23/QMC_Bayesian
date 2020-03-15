@@ -1,21 +1,11 @@
 clear;
-absTol = 1e-3;
+absTol = 1e-2;
 M = 100;
 logit = @(b,x,d) exp(b(1) + sum(bsxfun(@times,b(2:d+1),x(:,1:d)),2))./...
     (1+exp(b(1) + sum(bsxfun(@times,b(2:d+1),x(:,1:d)),2)));
-d = 3;
+d = 4;
 beta = -ones(1,d+1); beta(1) = 1;
 beta = beta.*(1 + 0.05*randn(1,d+1));
-%x = rand(M,d);
-% x = (linspace(-2,6,M))'/d;
-% x = repmat(x,1,d);
-% fac = (1:d)/(2*d+2);
-% x = bsxfun(@times,x,fac);
-% for i = 1:M
-%     if mod(i,2) == 0
-%         x(i,:) = fliplr(x(i,:));
-%     end
-% end
 x = -2 + 8*rand(M,d);
 y = rand(M,1) < logit(beta,x,d);
 getMLE;
@@ -35,7 +25,7 @@ post_mle = @(b) post(b).*(det(-Hessian))^(-0.5)...
 f1_mle = @(b) post_mle(b).*b(:,1);
 f2_mle = @(b) post_mle(b).*b(:,2);
 
-n = 20;
+n = 8;
 betaSobol = zeros(n,d);
 betaSobol_mle = zeros(n,d);    
 betaSobol_prod = zeros(n,d);

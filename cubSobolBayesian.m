@@ -12,7 +12,7 @@ f2 = @(x) f2(gail.stdnorminv(x));
 
 out_param.d = d+1;
 out_param.mmin = 10;
-out_param.mmax = 23;
+out_param.mmax = 22;
 out_param.fudge = @(m) 5*2.^-m;
 %% Main algorithm
 sobstr=sobolset(out_param.d); %generate a Sobol' sequence

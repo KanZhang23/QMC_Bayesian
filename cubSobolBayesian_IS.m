@@ -12,7 +12,7 @@ f2 = @(x) f2(bsxfun(@plus,gail.stdnorminv(x)*A',mu));
 
 out_param.d = d+1;
 out_param.mmin = 10;
-out_param.mmax = 24;
+out_param.mmax = 22;
 out_param.fudge = @(m) 5*2.^-m;
 %% Main algorithm
 sobstr=sobolset(out_param.d); %generate a Sobol' sequence
@@ -235,6 +235,7 @@ for m=out_param.mmin+1:out_param.mmax
     elseif m == out_param.mmax;
         warning('samples run out');
         q=v_hat;
+        q_sim=q1/q2;
         out_param.time=toc(t_start);
     end
 end

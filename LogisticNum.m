@@ -8,12 +8,7 @@ M=100;
 %           (1+exp(bsxfun(@plus,b(1),b(2)*x)));
 logit = @(b,x,d) exp(b(1) + sum(bsxfun(@times,b(2:d+1),x(:,1:d)),2))./...
     (1+exp(b(1) + sum(bsxfun(@times,b(2:d+1),x(:,1:d)),2)));
-% x = linspace(-2,6,M);
-% x = 8*rand(1,M) - 2;
-% y = rand(1,M) <= logit(beta,x);
-% getMLE;
-x = (linspace(-2,6,M))'/d;
-x = repmat(x,1,d);
+x = -2 + 8*rand(M,d);
 y = rand(M,1) < logit(beta,x,d);
 getMLE;
 LogLb = @(b) LogL(b,x,y,d);
@@ -34,7 +29,7 @@ A0 = U*sqrt(S);
 % prior1 = @(b) normpdf(b,0,1);    
 % prior2 = @(b) normpdf(b,0,1);    
 % post = @(b) prod(logitp(b,x).^y.*(1-logitp(b,x)).^(1-y))...  % likelihood
-%             .* prior1(b(1)) .* prior2(b(2));                  % priors
+%             .* prior1(b(1)) .* prior2(b(2));                  % prior
 
 
 post_stdn = @(b) prod(logitp(b,x,d).^(y').*(1-logitp(b,x,d)).^((1-y)'));
@@ -47,11 +42,11 @@ post_mle = @(b) post_mle(gail.stdnorminv(b)*A0' + betaMLE);
 % post_prod = @(b) post_prod(A_new*gail.stdnorminv(b) + c);
 
 nn = 100;
-b1 = linspace(-3, 3, nn);
-b2 = linspace(-3, 3, nn);
+b1 = linspace(0, 1, nn);
+b2 = linspace(0, 1, nn);
 b3 = linspace(-3, 3, nn);
 % simpost = zeros(nn,nn);
-
+% 
 % for i = 1:length(b1)
 %     for j = 1:length(b2)
 %         simpost(i,j) = post([b1(i) b2(j)]);
@@ -83,7 +78,7 @@ for i = 1:length(b1)
 %         end
     end;
 end;
-% subplot(2,2,2);
+subplot(2,2,2);
 surf(b1,b2,simpost_stdn(:,:),'FaceColor','red','EdgeColor','none')
 camlight left; lighting phong;
 xlabel('$\beta_1$')
@@ -92,8 +87,7 @@ title('$f_{\pi}$')
 %axis(ax)
 
 
-% subplot(2,2,3);
-figure;
+subplot(2,2,3);
 surf(b1,b2,simpost_mle(:,:),'FaceColor','red','EdgeColor','none')
 camlight right; lighting phong;
 xlabel('$\beta_1$')
